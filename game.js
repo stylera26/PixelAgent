@@ -9,6 +9,8 @@ let game;
 let sessionStart = null;
 let timerInterval = null;
 const agents = {}; // agent_id → { state, sprite, bubble, progressInterval }
+let sachaSprite = null;
+let sachaScene = null;
 
 // --- Phaser Game Config ---
 const config = {
@@ -209,7 +211,41 @@ function buildMap(scene) {
   scene.add.text(ZONES.lab.col     * TILE_SIZE + 4, ZONES.lab.row     * TILE_SIZE + 4, "LABO",   labelStyle);
   scene.add.text(ZONES.town.col    * TILE_SIZE + 4, ZONES.town.row    * TILE_SIZE + 4, "VILLE",  labelStyle);
 }
-function spawnSacha(scene) {}
+function spawnSacha(scene) {
+  sachaScene = scene;
+  const startX = (ZONES.town.col + 3) * TILE_SIZE;
+  const startY = (ZONES.town.row + 3) * TILE_SIZE;
+  sachaSprite = scene.add.sprite(startX, startY, "sacha", 0);
+  sachaSprite.setDepth(10);
+
+  scene.anims.create({
+    key: "sacha_walk",
+    frames: scene.anims.generateFrameNumbers("sacha", { start: 0, end: 3 }),
+    frameRate: 8,
+    repeat: -1,
+  });
+}
+
+function moveSachaToZone(toolName) {
+  if (!sachaSprite || !sachaScene) return;
+  const zone = getZoneForTool(toolName);
+  const target = randomPosInZone(zone);
+  sachaSprite.play("sacha_walk");
+
+  const dist = Phaser.Math.Distance.Between(sachaSprite.x, sachaSprite.y, target.x, target.y);
+  const speed = 3 * TILE_SIZE; // pixels per second
+  const duration = (dist / speed) * 1000;
+
+  sachaScene.tweens.add({
+    targets: sachaSprite,
+    x: target.x,
+    y: target.y,
+    duration: Math.max(300, duration),
+    ease: "Linear",
+    onComplete: () => sachaSprite.stop(),
+  });
+}
+
 function connectWebSocket(scene) {}
 
 window.addEventListener("load", () => { game = new Phaser.Game(config); });

@@ -300,10 +300,146 @@ function onToolUsed(evt) {
   moveSachaToZone(evt.tool);
 }
 
-// Stubs for Tasks 7 — implemented later
-function onAgentCreated(evt) {}
-function onAgentUpdated(evt) {}
-function onAgentCompleted(evt) {}
+function onAgentCreated(evt) {
+  const agent = evt.agent;
+  const pokeDef = getPokemonDef(agent.type);
+  const zone = ZONES.lab;
+  const pos = randomPosInZone(zone);
+
+  const sprite = wsScene.add.sprite(pos.x, pos.y, pokeDef.key, 0);
+  sprite.setDepth(10);
+
+  wsScene.anims.create({
+    key: `walk_${agent.id}`,
+    frames: wsScene.anims.generateFrameNumbers(pokeDef.key, { start: 0, end: 3 }),
+    frameRate: 6,
+    repeat: -1,
+  });
+
+  const bubble = wsScene.add.text(pos.x, pos.y - 12, "", {
+    fontSize: "5px",
+    fontFamily: "'Press Start 2P'",
+    color: "#ffffff",
+    backgroundColor: "#000000aa",
+    padding: { x: 2, y: 1 },
+    wordWrap: { width: 80 },
+  });
+  bubble.setDepth(20);
+  bubble.setOrigin(0.5, 1);
+
+  agents[agent.id] = {
+    ...agent,
+    sprite,
+    bubble,
+    progressStart: Date.now(),
+    progressInterval: setInterval(() => updateProgressBar(agent.id), 500),
+  };
+
+  renderBottomPanel();
+  triggerSpawnEffects(pokeDef.name);
+}
+
+function triggerSpawnEffects(pokemonName) {
+  // White flash
+  const flash = document.getElementById("flash-overlay");
+  flash.style.opacity = "1";
+  flash.style.transition = "opacity 0.3s ease";
+  setTimeout(() => flash.style.opacity = "0", 50);
+
+  // Spawn text
+  const text = document.getElementById("spawn-text");
+  text.textContent = `Un agent ${pokemonName.toUpperCase()} est apparu !`;
+  text.style.opacity = "1";
+  text.style.transition = "none";
+  setTimeout(() => {
+    text.style.transition = "opacity 0.5s ease";
+    text.style.opacity = "0";
+  }, 2000);
+}
+
+function onAgentUpdated(evt) {
+  const a = agents[evt.agent_id];
+  if (!a) return;
+  a.status = "in_progress";
+  a.current_tool = evt.tool;
+  a.current_file = evt.file;
+  a.progressStart = Date.now();
+
+  const label = `${evt.tool || ""}${evt.file ? ": " + evt.file.slice(-16) : ""}`;
+  a.bubble.setText(label.slice(0, 24));
+  a.bubble.setPosition(a.sprite.x, a.sprite.y - 12);
+
+  a.sprite.play(`walk_${evt.agent_id}`);
+
+  renderBottomPanel();
+}
+
+function onAgentCompleted(evt) {
+  const a = agents[evt.agent_id];
+  if (!a) return;
+  a.status = "done";
+  a.result = evt.result;
+  clearInterval(a.progressInterval);
+
+  a.sprite.stop();
+  a.bubble.setText("");
+
+  // Sparkle particles
+  const particles = wsScene.add.particles(a.sprite.x, a.sprite.y, "tile_path", {
+    speed: { min: 20, max: 60 },
+    scale: { start: 0.5, end: 0 },
+    lifespan: 600,
+    quantity: 8,
+    tint: [0xffd700, 0xffffff, 0x80ff80],
+  });
+  setTimeout(() => particles.destroy(), 800);
+
+  // Fade out sprite + bubble
+  wsScene.tweens.add({
+    targets: [a.sprite, a.bubble],
+    alpha: 0,
+    duration: 1000,
+    onComplete: () => {
+      a.sprite.destroy();
+      a.bubble.destroy();
+    },
+  });
+
+  renderBottomPanel();
+}
+
+function updateProgressBar(agentId) {
+  const el = document.getElementById(`progress-${agentId}`);
+  if (!el) return;
+  const a = agents[agentId];
+  if (!a || a.status === "done") return;
+  const elapsed = (Date.now() - a.progressStart) / 1000;
+  const pct = Math.min(100, (elapsed / 30) * 100); // fills over 30s
+  el.style.width = pct + "%";
+}
+
+function renderBottomPanel() {
+  const list = document.getElementById("agent-list");
+  const activeAgents = Object.values(agents).filter(a => a.status !== "done");
+  document.getElementById("agent-count").textContent = `${activeAgents.length} agents actifs`;
+
+  list.innerHTML = "";
+  Object.values(agents).slice(-8).forEach(a => {
+    const pokeDef = getPokemonDef(a.type);
+    const tool = a.current_tool || "IDLE";
+    const file = (a.current_file || "—").slice(-20);
+    const li = document.createElement("li");
+    li.className = "agent-row";
+    li.innerHTML = `
+      <span class="pokemon-name">${pokeDef.emoji} ${pokeDef.name}</span>
+      <span class="agent-tool">${tool}</span>
+      <span class="agent-file">${file}</span>
+      <div class="progress-bar"><div class="progress-fill" id="progress-${a.id}" style="width:0%"></div></div>
+    `;
+    if (a.status === "done") li.style.opacity = "0.4";
+    list.appendChild(li);
+  });
+}
 
 function updateTimer() {
   if (!sessionStart) return;

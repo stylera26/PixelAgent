@@ -99,6 +99,15 @@ function generateAssets(scene) {
   makeTile(scene, "tile_path", ctx => {
     ctx.fillStyle = PAL.path; ctx.fillRect(0, 0, 16, 16);
   });
+  makeTile(scene, "tile_lab", ctx => {
+    // Lab: dark purple floor with test tube dots
+    ctx.fillStyle = PAL.darkGray; ctx.fillRect(0, 0, 16, 16);
+    ctx.fillStyle = PAL.purple;
+    ctx.fillRect(0, 0, 16, 3); // purple roof strip
+    [[3,6],[3,7],[3,8],[11,6],[11,7],[11,8]].forEach(([x,y]) => ctx.fillRect(x,y,1,1)); // test tubes
+    ctx.fillStyle = PAL.blue;
+    [[4,9],[12,9]].forEach(([x,y]) => ctx.fillRect(x,y,1,1)); // liquid
+  });
 
   // --- Sacha sprite (4 walk frames) ---
   makeSprite(scene, "sacha", 4, (ctx, ox, frame) => {
@@ -158,7 +167,7 @@ const ZONES = {
   library: { col: 20, row: 0,  w: 10,h: 9,  tile: "tile_building", tools: ["Read","Grep","Glob"] },
   forge:   { col: 0,  row: 11, w: 10,h: 9,  tile: "tile_sand",     tools: ["Edit","Write"] },
   ocean:   { col: 20, row: 11, w: 10,h: 9,  tile: "tile_water",    tools: ["WebSearch","WebFetch"] },
-  lab:     { col: 12, row: 0,  w: 6, h: 6,  tile: "tile_building", tools: ["Agent","Plan"] },
+  lab:     { col: 12, row: 0,  w: 6, h: 6,  tile: "tile_lab",      tools: ["Agent","Plan"] },
 };
 
 function getZoneForTool(toolName) {

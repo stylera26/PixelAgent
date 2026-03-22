@@ -51,3 +51,32 @@ def test_build_agent_created_event():
     assert evt["agent"]["pokemon"] == "Ronflex"
     assert evt["agent"]["status"] == "pending"
     assert evt["agent"]["type"] == "Explore"
+
+import tempfile, pathlib
+
+def test_setup_hooks_creates_file(tmp_path):
+    from server import setup_hooks
+    settings_file = tmp_path / "settings.json"
+    setup_hooks(settings_path=str(settings_file))
+    data = json.loads(settings_file.read_text())
+    assert "hooks" in data
+    assert "PreToolUse" in data["hooks"]
+    assert "PostToolUse" in data["hooks"]
+    assert "Stop" in data["hooks"]
+
+def test_setup_hooks_is_idempotent(tmp_path):
+    from server import setup_hooks
+    settings_file = tmp_path / "settings.json"
+    setup_hooks(settings_path=str(settings_file))
+    setup_hooks(settings_path=str(settings_file))
+    data = json.loads(settings_file.read_text())
+    assert len(data["hooks"]["PreToolUse"]) == 1
+
+def test_setup_hooks_preserves_existing(tmp_path):
+    from server import setup_hooks
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(json.dumps({"theme": "dark", "hooks": {}}))
+    setup_hooks(settings_path=str(settings_file))
+    data = json.loads(settings_file.read_text())
+    assert data["theme"] == "dark"
+    assert "PreToolUse" in data["hooks"]

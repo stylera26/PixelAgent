@@ -151,6 +151,36 @@ async def handle_event(request: web.Request) -> web.Response:
 
     return web.Response(text="OK")
 
+HOOK_COMMAND = "curl -s -X POST http://localhost:8765/event -H 'Content-Type: application/json' -d @-"
+HOOK_ENTRY = {"type": "command", "command": HOOK_COMMAND}
+
+def setup_hooks(settings_path: str | None = None) -> None:
+    if settings_path is None:
+        settings_path = os.path.expanduser("~/.claude/settings.json")
+
+    path = pathlib.Path(settings_path)
+    if path.exists():
+        data = json.loads(path.read_text())
+    else:
+        data = {}
+
+    hooks = data.setdefault("hooks", {})
+
+    for event in ("PreToolUse", "PostToolUse", "Stop"):
+        entries = hooks.setdefault(event, [])
+        already_registered = any(
+            h.get("command") == HOOK_COMMAND
+            for entry in entries
+            for h in (entry.get("hooks", [entry]) if isinstance(entry, dict) else [])
+        )
+        if not already_registered:
+            entries.append({"matcher": "", "hooks": [HOOK_ENTRY]})
+
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+    print(f"✓ Hooks written to {settings_path}")
+    print("  Restart Claude Code for hooks to take effect.")
+
+
 def build_app() -> web.Application:
     app = web.Application()
     app.router.add_get("/", handle_index)
@@ -162,7 +192,7 @@ def build_app() -> web.Application:
 if __name__ == "__main__":
     import sys
     if "--setup" in sys.argv:
-        print("Setup not yet implemented")
+        setup_hooks()
         sys.exit(0)
     app = build_app()
     print("PixelAgent server running at http://localhost:8765")

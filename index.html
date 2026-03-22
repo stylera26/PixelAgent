@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>PixelAgent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0a0a; color: #e8e8e8; font-family: 'Press Start 2P', monospace; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    #top-bar { background: #1a1a2e; border-bottom: 2px solid #4a4a8a; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    #top-bar .title { color: #a0c8ff; font-size: 10px; }
+    #top-bar .session-info { color: #80ff80; font-size: 9px; text-align: right; }
+
+    #game-container { flex: 1; position: relative; overflow: hidden; }
+
+    #bottom-panel { background: #1a1a2e; border-top: 2px solid #4a4a8a; height: 96px; overflow-y: auto; flex-shrink: 0; }
+    #agent-list { list-style: none; }
+    .agent-row { display: flex; align-items: center; gap: 8px; padding: 4px 12px; border-bottom: 1px solid #2a2a4a; font-size: 8px; }
+    .agent-row .pokemon-name { color: #ffd700; width: 80px; flex-shrink: 0; }
+    .agent-row .agent-tool { color: #80c8ff; width: 60px; flex-shrink: 0; }
+    .agent-row .agent-file { color: #c0c0c0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .agent-row .progress-bar { width: 80px; height: 8px; background: #2a2a4a; border: 1px solid #4a4a8a; flex-shrink: 0; }
+    .agent-row .progress-fill { height: 100%; background: #80ff80; transition: width 0.5s linear; }
+
+    /* CRT scanlines overlay */
+    #crt-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); }
+
+    /* Flash overlay */
+    #flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 200; background: white; opacity: 0; }
+
+    /* Spawn text overlay */
+    #spawn-text { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 201; font-family: 'Press Start 2P', monospace; font-size: 12px; color: #fff; text-shadow: 2px 2px #000; opacity: 0; text-align: center; }
+  </style>
+</head>
+<body>
+  <div id="top-bar">
+    <span class="title">CLAUDE CODE</span>
+    <div class="session-info">
+      <div id="timer">SESSION: 00:00:00</div>
+      <div id="agent-count">0 agents actifs</div>
+    </div>
+  </div>
+
+  <div id="game-container"></div>
+
+  <div id="bottom-panel">
+    <ul id="agent-list"></ul>
+  </div>
+
+  <div id="crt-overlay"></div>
+  <div id="flash-overlay"></div>
+  <div id="spawn-text"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

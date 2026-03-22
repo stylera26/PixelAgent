@@ -246,6 +246,72 @@ function moveSachaToZone(toolName) {
   });
 }
 
-function connectWebSocket(scene) {}
+const POKEMON_MAP = {
+  "Explore":         { key: "ronflex",  name: "Ronflex",  emoji: "💤" },
+  "Plan":            { key: "alakazam", name: "Alakazam", emoji: "🔮" },
+  "general-purpose": { key: "pikachu",  name: "Pikachu",  emoji: "⚡" },
+  "code-reviewer":   { key: "noctali",  name: "Noctali",  emoji: "🌙" },
+  "__mewtwo__":      { key: "mewtwo",   name: "Mewtwo",   emoji: "🌀" },
+  "__default__":     { key: "evoli",    name: "Évoli",    emoji: "⭐" },
+};
+
+function getPokemonDef(agentType) {
+  if (!agentType) return POKEMON_MAP["__default__"];
+  if (agentType.startsWith("superpowers:")) return POKEMON_MAP["__mewtwo__"];
+  return POKEMON_MAP[agentType] || POKEMON_MAP["__default__"];
+}
+
+let wsScene = null;
+
+function connectWebSocket(scene) {
+  wsScene = scene;
+  const ws = new WebSocket(WS_URL);
+  ws.onopen = () => console.log("[WS] Connected");
+  ws.onmessage = (msg) => {
+    try { handleEvent(JSON.parse(msg.data)); }
+    catch(e) { console.error("[WS] Parse error", e); }
+  };
+  ws.onclose = () => setTimeout(() => connectWebSocket(scene), 3000);
+  ws.onerror = (e) => console.error("[WS] Error", e);
+}
+
+function handleEvent(evt) {
+  switch (evt.event) {
+    case "session_started":  onSessionStarted(evt); break;
+    case "session_ended":    onSessionEnded(evt);   break;
+    case "agent_created":    onAgentCreated(evt);   break;
+    case "agent_updated":    onAgentUpdated(evt);   break;
+    case "agent_completed":  onAgentCompleted(evt); break;
+    case "tool_used":        onToolUsed(evt);       break;
+  }
+}
+
+function onSessionStarted(evt) {
+  sessionStart = Date.now();
+  timerInterval = setInterval(updateTimer, 1000);
+  updateTimer();
+}
+
+function onSessionEnded(evt) {
+  clearInterval(timerInterval);
+}
+
+function onToolUsed(evt) {
+  moveSachaToZone(evt.tool);
+}
+
+// Stubs for Tasks 7 — implemented later
+function onAgentCreated(evt) {}
+function onAgentUpdated(evt) {}
+function onAgentCompleted(evt) {}
+
+function updateTimer() {
+  if (!sessionStart) return;
+  const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+  const h = String(Math.floor(elapsed / 3600)).padStart(2, "0");
+  const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, "0");
+  const s = String(elapsed % 60).padStart(2, "0");
+  document.getElementById("timer").textContent = `SESSION: ${h}:${m}:${s}`;
+}
 
 window.addEventListener("load", () => { game = new Phaser.Game(config); });

@@ -151,8 +151,55 @@ function generateAssets(scene) {
   });
 }
 
+// Zone definitions — pixel tile coordinates (col, row)
+const ZONES = {
+  town:    { col: 12, row: 7,  w: 6, h: 6,  tile: "tile_path",     tools: [] },
+  forest:  { col: 0,  row: 0,  w: 10,h: 9,  tile: "tile_tree",     tools: ["Bash"] },
+  library: { col: 20, row: 0,  w: 10,h: 9,  tile: "tile_building", tools: ["Read","Grep","Glob"] },
+  forge:   { col: 0,  row: 11, w: 10,h: 9,  tile: "tile_sand",     tools: ["Edit","Write"] },
+  ocean:   { col: 20, row: 11, w: 10,h: 9,  tile: "tile_water",    tools: ["WebSearch","WebFetch"] },
+  lab:     { col: 12, row: 0,  w: 6, h: 6,  tile: "tile_building", tools: ["Agent","Plan"] },
+};
+
+function getZoneForTool(toolName) {
+  for (const [name, zone] of Object.entries(ZONES)) {
+    if (zone.tools.includes(toolName)) return zone;
+  }
+  return ZONES.town;
+}
+
+function randomPosInZone(zone) {
+  return {
+    x: (zone.col + 1 + Math.floor(Math.random() * (zone.w - 2))) * TILE_SIZE,
+    y: (zone.row + 1 + Math.floor(Math.random() * (zone.h - 2))) * TILE_SIZE,
+  };
+}
+
 // Stubs — implemented in later tasks
-function buildMap(scene) {}
+function buildMap(scene) {
+  // Fill base with grass
+  for (let row = 0; row < MAP_ROWS; row++) {
+    for (let col = 0; col < MAP_COLS; col++) {
+      scene.add.image(col * TILE_SIZE + TILE_SIZE/2, row * TILE_SIZE + TILE_SIZE/2, "tile_grass");
+    }
+  }
+  // Draw zones over the grass base
+  for (const zone of Object.values(ZONES)) {
+    for (let r = zone.row; r < zone.row + zone.h; r++) {
+      for (let c = zone.col; c < zone.col + zone.w; c++) {
+        scene.add.image(c * TILE_SIZE + TILE_SIZE/2, r * TILE_SIZE + TILE_SIZE/2, zone.tile);
+      }
+    }
+  }
+  // Zone labels
+  const labelStyle = { fontSize: "5px", fontFamily: "'Press Start 2P'", color: "#ffffff", stroke: "#000000", strokeThickness: 2 };
+  scene.add.text(ZONES.forest.col  * TILE_SIZE + 4, ZONES.forest.row  * TILE_SIZE + 4, "FORET",  labelStyle);
+  scene.add.text(ZONES.library.col * TILE_SIZE + 4, ZONES.library.row * TILE_SIZE + 4, "BIBLIO", labelStyle);
+  scene.add.text(ZONES.forge.col   * TILE_SIZE + 4, ZONES.forge.row   * TILE_SIZE + 4, "FORGE",  labelStyle);
+  scene.add.text(ZONES.ocean.col   * TILE_SIZE + 4, ZONES.ocean.row   * TILE_SIZE + 4, "OCEAN",  labelStyle);
+  scene.add.text(ZONES.lab.col     * TILE_SIZE + 4, ZONES.lab.row     * TILE_SIZE + 4, "LABO",   labelStyle);
+  scene.add.text(ZONES.town.col    * TILE_SIZE + 4, ZONES.town.row    * TILE_SIZE + 4, "VILLE",  labelStyle);
+}
 function spawnSacha(scene) {}
 function connectWebSocket(scene) {}
 

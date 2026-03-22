@@ -342,9 +342,12 @@ function onAgentCreated(evt) {
 function triggerSpawnEffects(pokemonName) {
   // White flash
   const flash = document.getElementById("flash-overlay");
+  flash.style.transition = "none";     // snap to white instantly
   flash.style.opacity = "1";
-  flash.style.transition = "opacity 0.3s ease";
-  setTimeout(() => flash.style.opacity = "0", 50);
+  setTimeout(() => {
+    flash.style.transition = "opacity 0.05s ease"; // fade out in 50ms
+    flash.style.opacity = "0";
+  }, 50);
 
   // Spawn text
   const text = document.getElementById("spawn-text");

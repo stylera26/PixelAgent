@@ -58,6 +58,7 @@ function makeTile(scene, key, drawFn) {
 }
 
 function makeSprite(scene, key, frames, drawFn) {
+  // frames: number of walk animation frames — canvas width = TILE_SIZE * frames
   const canvas = document.createElement("canvas");
   canvas.width = TILE_SIZE * frames; canvas.height = TILE_SIZE;
   const ctx = canvas.getContext("2d");
@@ -87,8 +88,8 @@ function generateAssets(scene) {
     ctx.fillStyle = PAL.building; ctx.fillRect(0, 0, 16, 16);
     ctx.fillStyle = PAL.roof; ctx.fillRect(0, 0, 16, 5);
     ctx.fillStyle = PAL.buildingDark;
-    ctx.fillRect(3, 6, 4, 5); ctx.fillRect(9, 6, 4, 5);
-    ctx.fillRect(5, 11, 6, 5);
+    ctx.fillRect(3, 6, 4, 5); ctx.fillRect(9, 6, 4, 5); // windows
+    ctx.fillRect(5, 11, 6, 5); // door
   });
   makeTile(scene, "tile_sand", ctx => {
     ctx.fillStyle = PAL.sand; ctx.fillRect(0, 0, 16, 16);
@@ -101,11 +102,16 @@ function generateAssets(scene) {
 
   // --- Sacha sprite (4 walk frames) ---
   makeSprite(scene, "sacha", 4, (ctx, ox, frame) => {
+    // Hat
     for (let x=5;x<=10;x++) px(ctx, ox+x, 0, PAL.hatRed);
     for (let x=6;x<=9;x++) px(ctx, ox+x, 1, PAL.hatWhite);
+    // Hair (overlaps hat brim)
     px(ctx, ox+7, 1, PAL.hairBlack); px(ctx, ox+8, 1, PAL.hairBlack);
+    // Face
     px(ctx, ox+7, 2, PAL.skinLight); px(ctx, ox+8, 2, PAL.skinLight);
+    // Body
     for (let x=6;x<=9;x++) for (let y=4;y<=7;y++) px(ctx, ox+x, y, PAL.shirt);
+    // Legs (animated — alternate each frame)
     const legL = frame % 2 === 0 ? 9 : 10;
     const legR = frame % 2 === 0 ? 9 : 8;
     px(ctx, ox+6, legL, PAL.pants); px(ctx, ox+9, legR, PAL.pants);
@@ -124,16 +130,21 @@ function generateAssets(scene) {
 
   pokemonDefs.forEach(({ key, color, accent, ear }) => {
     makeSprite(scene, key, 4, (ctx, ox, frame) => {
+      // Body
       ctx.fillStyle = color;
       ctx.fillRect(ox+4, 4, 8, 8);
+      // Head
       ctx.fillRect(ox+5, 2, 6, 4);
+      // Eyes (accent bg + black pupils)
       ctx.fillStyle = accent;
       ctx.fillRect(ox+6, 3, 2, 2);
-      px(ctx, ox+6, 3, PAL.black); px(ctx, ox+9, 3, PAL.black);
+      px(ctx, ox+6, 3, PAL.black); px(ctx, ox+9, 3, PAL.black); // pupils
+      // Legs (animated bounce)
       const bounce = frame % 2 === 0 ? 0 : 1;
       ctx.fillStyle = color;
       ctx.fillRect(ox+5, 12+bounce, 2, 2);
       ctx.fillRect(ox+9, 12-bounce, 2, 2);
+      // Ears
       ctx.fillStyle = ear;
       px(ctx, ox+5, 1, ear); px(ctx, ox+10, 1, ear);
     });

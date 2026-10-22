@@ -1,0 +1,3 @@
+# Scan Aplomb (secrets, IaC, dépendances) : voir devops/ci-templates, pipelines/scan-only.yml.
+include:
+  - {project: nas-sty/devops/ci-templates, ref: main, file: pipelines/scan-only.yml}
